@@ -23,9 +23,6 @@ Code Contents:
 loc0 = Path(__file__).parent
 
 
-
- 
-
 def city_code():
      """
      There are city code in manifest.csv, 
@@ -86,6 +83,26 @@ def merge_csv(csv_id, loc0):
      return DF, err_list
  
 
+def select_col(file_key=0):
+    if file_key==1:
+        col  = ['data','城市','鄉鎮市區', '交易標的', 
+                '土地位置建物門牌', '土地移轉總面積平方公尺', '都市土地使用分區',
+                '交易年月日', '建物型態', '主要用途', '主要建材',
+                '建物移轉總面積平方公尺', '總價元', '單價元平方公尺', '車位移轉總面積平方公尺', '車位總價元',
+                '備註', '編號']
+    elif file_key==2:
+        col  = ['data','城市', '鄉鎮市區', '交易標的', '租賃年月日', 
+                 '建物型態', '主要用途', '主要建材',
+                '建築完成年月', '建物總面積平方公尺', '有無管理組織', '有無附傢俱', '總額元', 
+                '單價元平方公尺', '車位類別', '車位面積平方公尺', '車位總額元', '備註',
+                '編號', '出租型態', '有無管理員', '租賃期間', '有無電梯', '附屬設備', '租賃住宅服務']
+    else:
+        col  = ['data','城市', '鄉鎮市區', '交易標的', '土地移轉總面積平方公尺', '都市土地使用分區', 
+                '交易年月日', '建物型態', '主要用途', '主要建材','建築完成年月', '建物移轉總面積平方公尺', 
+                '建物現況格局-隔間', '總價元', '單價元平方公尺', '車位移轉總面積平方公尺', '車位總價元',
+                '備註', '編號', '主建物面積']
+    return col
+
 
 
 def collect_data(csv_id, loc, start=0):
@@ -114,33 +131,12 @@ def collect_data(csv_id, loc, start=0):
                 Fore.YELLOW +'\n There is something wrong in zip raw file(s):\n'+ 
                 Style.RESET_ALL)
          pprint(err_total_list)
+
+    DF_col = select_col(csv_id)
+    Total_DF = Total_DF[DF_col]     
     return Total_DF, err_total_list
 
-#print(Subfolders_info[10])
-#merge_csv(1, Subfolders_info[10])
-
-
-
-def select_col(file_key=0):
-    if file_key==1:
-        col  = ['data','城市','鄉鎮市區', '交易標的', 
-                '土地位置建物門牌', '土地移轉總面積平方公尺', '都市土地使用分區',
-                '交易年月日', '建物型態', '主要用途', '主要建材',
-                '建物移轉總面積平方公尺', '總價元', '單價元平方公尺', '車位移轉總面積平方公尺', '車位總價元',
-                '備註', '編號']
-    elif file_key==2:
-        col  = ['data','城市', '鄉鎮市區', '交易標的', '租賃年月日', 
-                 '建物型態', '主要用途', '主要建材',
-                '建築完成年月', '建物總面積平方公尺', '有無管理組織', '有無附傢俱', '總額元', 
-                '單價元平方公尺', '車位類別', '車位面積平方公尺', '車位總額元', '備註',
-                '編號', '出租型態', '有無管理員', '租賃期間', '有無電梯', '附屬設備', '租賃住宅服務']
-    else:
-        col  = ['data','城市', '鄉鎮市區', '交易標的', '土地移轉總面積平方公尺', '都市土地使用分區', 
-                '交易年月日', '建物型態', '主要用途', '主要建材','建築完成年月', '建物移轉總面積平方公尺', 
-                '建物現況格局-隔間', '總價元', '單價元平方公尺', '車位移轉總面積平方公尺', '車位總價元',
-                '備註', '編號', '主建物面積']
-    return col
-
+ 
 
 def save_file(DF_file, foldername,file_key, folder_key):
     """
@@ -157,7 +153,7 @@ def save_file(DF_file, foldername,file_key, folder_key):
     file_dict   = {0:"estate",1:'presale',2:'rent'}
     folder_dict = {0:"old",1:"new"}  # 新資料與舊資料
     filetype =  file_dict[file_key]+'_'+ folder_dict[folder_key] +'_'
-    save_time = dt.datetime.today().strftime('%Y%m_%d') #儲存時間
+    save_time = dt.datetime.today().strftime('%Y%m') #儲存時間
     file0 =  filetype + save_time + r'.pickle' #儲存格式
     filename = Path(foldername) /file0
     with open(filename, 'wb') as ff:
@@ -165,48 +161,43 @@ def save_file(DF_file, foldername,file_key, folder_key):
     print('檔案於{a}儲存於{b}, 檔案名稱為~~{c}~~'.format(a=save_time, b=foldername, c=file0))
     
 
+def save_pkl(csv_id , loc0, save_loc):
+    """
+    給定資料夾與csv_id (預售屋,成屋)與csv位置loc0, 
+    將檔案存成pickle檔並放在save_loc內
+    """
+    if not isinstance(loc0, list):
+        loc0 = [loc0]
+    for ii,jj in enumerate(loc0):
+        DF, _ = collect_data(csv_id, jj)
+        save_file(DF, save_loc,csv_id, folder_key=ii)
+
+
+           
+def load_pickle(dir, key_id):
+    DF = pd.DataFrame()
+    key_file = {0:'estate', 1:'presale', 2:'rent'}
+    pickle_files = [jj for jj in os.listdir(dir) if re.search(key_file[key_id],jj)]
+    if isinstance(pickle_files, str):
+        pickle_files = [pickle_files] 
+    if not pickle_files ==[]: 
+        for jj in pickle_files: 
+            file_dir = dir+'/'+ jj
+            with open(file_dir, 'rb') as ff:
+                result = pickle.load(ff)
+                DF = pd.concat([result, DF], axis=0, join='outer')
+    else:
+        result = 'The file empty!'
+        print(result)
+        DF = None
+    return DF
+
+
+
 
 if __name__ =='__main__':
     variables = sys.argv
     root1 = variables[1]
     key_id = int(variables[2]) # 0: 成屋, 1:預售屋, 2:租賃
-    DF_file,B= collect_data(key_id,root1)
-    if len(variables) < 3:
-          print('Not enough parameters...')
-    elif len(variables) == 3:
-         save_bool = 0
-    else:
-         save_bool = variables[3]
-
-    if save_bool:
-        save_loc0 = input('請輸入儲存位置...(若不輸入將直接存入原位置):\n') or root1 
-        folder_type = input('是否為季資料?[Y/N]')
-        folder_type = folder_type.upper()
-        folder_dict = {'Y':0, 'N':1}
-        save_file(DF_file, save_loc0,key_id, folder_dict[folder_type])
-    else:
-        print('不儲存,直接取消...')
-
-
-
-#save_file(DF_file, save_loc0,file_key, folder_key,file_name="")            
-# def load_pickle(dir, key_id):
-#     DF = pd.DataFrame()
-#     key_file = {0:'estate', 1:'presale', 2:'rent'}
-#     pickle_files = [jj for jj in os.listdir(dir) if re.search(key_file[key_id],jj)]
-#     #print(pickle_files)
-#     if isinstance(pickle_files, str):
-#         pickle_files = [pickle_files] 
-#     if not pickle_files ==[]: 
-#         for jj in pickle_files: #可針對不同的pickle進行清理
-#             file_dir = dir+'/'+ jj
-#             with open(file_dir, 'rb') as ff:
-#                 result = pickle.load(ff)
-#                 DF = pd.concat([result, DF], axis=0, join='outer')
-#     else:
-#         result = 'The file empty!'
-#         print(result)
-#         DF = None
-#     return DF
-
-
+    DF_file,B= collect_data(key_id,root1) # 讀取資料夾
+ 

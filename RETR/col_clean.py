@@ -16,7 +16,6 @@ Function list:
 8. set_numeric_col: 將部分欄位轉為 numeric
 ####　選用部分　＃＃＃＃
 9. set_bool_col : 將部分欄位轉為 boolean格式
-10. 
 
 """
 
