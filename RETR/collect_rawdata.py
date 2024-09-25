@@ -8,6 +8,7 @@ import os
 import datetime as dt
 import pickle 
 from pprint import pprint
+from RETR.col_clean import *
 from colorama import Fore, Style
 """
 Code Contents:
@@ -132,8 +133,17 @@ def collect_data(csv_id, loc, start=0):
                 Style.RESET_ALL)
          pprint(err_total_list)
 
-    DF_col = select_col(csv_id)
-    Total_DF = Total_DF[DF_col]     
+    col = select_col(csv_id)
+    if csv_id != 2: # 成屋與預售屋
+        Total_DF = Total_DF[col]
+        Total_DF = convert_date(Total_DF) #交易年月日
+        Total_DF = set_numeric_col(Total_DF)
+    
+    if csv_id ==0: # 成屋, 計算屋齡
+        Total_DF = convert_build_date(Total_DF)
+        Total_DF['屋齡'] = Total_DF['交易年月日'] - Total_DF['建築完成年月']
+        Total_DF['屋齡'] = Total_DF['屋齡'].apply(lambda x: round(x.days/365,0)).astype(int)
+
     return Total_DF, err_total_list
 
  

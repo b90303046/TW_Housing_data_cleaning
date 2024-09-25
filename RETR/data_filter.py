@@ -1,11 +1,10 @@
 #%%
-import os
+
 import numpy as np
-import re
 from pprint import pprint
 import pandas as pd
 import datetime as dt
-import xlwings as xw
+#import xlwings as xw
 
 
 #%%
@@ -64,7 +63,20 @@ def time_range(df, start=(2011,1,1), end=(end_year, end_month, end_day), col='�
     return df1
 
 
+def filter_info(func):
+    def inner_fun(*args,**kwarg):
+        row0 = args[0].shape[0]  # 期初篩選資料筆數
+        print('篩選欄位{a1}, 篩選條件為{a2}'.format(a1 = kwarg['column'],
+                                           a2 =kwarg['keywords']))
+        result = func(*args, **kwarg)
+        row1 = result.shape[0] # After filter
+        state2 = '共刪除{ans}筆'.format(ans=row0-row1)
+        print(state2)
+        return result
+    return inner_fun
 
+
+@filter_info
 def filter_obj(df, column,  keywords, negate=False): 
     """
     篩選欄位內特定關鍵詞:
@@ -112,7 +124,7 @@ def filter_special(df, special=['親友','地上權','員工','特殊'], negate=
     #remove_tranaction=['親友','員工','地上權','特殊']
     #remove_tranaction=['地上權','特殊']
     pat2 = '|'.join(special)
-    df1['備註'].fillna('NA', inplace=True) 
+    df1.fillna({'備註':'NA'}, inplace=True) 
     if negate:
         case_bool2 =  ~df1['備註'].str.contains(pat2, na=False)
     else:
@@ -142,27 +154,6 @@ def combine_region(x):
 
 
 
-def filter_live_b(df):
-    """
-    僅限預售屋使用, 將dataframe拆成兩個:
-    住 or 非住(我覺得寫得不好)
-    """
-    df1 = df.copy()
-    bool1 = df1['都市土地使用分區'].str.contains('住')
-    bool2 = df1['主要用途'].str.contains('住')
-    bool_true  = bool1 | bool2
-    bool_false = ~ bool_true
-    df1_live  = df1[bool_true]
-    df1_nolive =df1[bool_false]
-    Presale_dict =dict()
-    Presale_dict['住'] = df1_live
-    Presale_dict['非住'] = df1_nolive
-    return Presale_dict
-
-
-# 設計(交易)月頻, 季頻資料, 方便日後清理
-
- 
 
 
 def remove_tail_case(df,group_set,col,quant):
@@ -274,18 +265,35 @@ def table1_expand(df_table):
     return Temp_dict
 
 
+def classify_region(city):
+    """
+    設定高價住宅區域認定規則
+    """
+    city_set ={'桃園市','臺中市','臺南市','高雄市','新竹市','新竹縣'}
+    #city_set2 ={'苗栗縣','彰化縣','基隆市','雲林縣','屏東縣','花蓮縣',
+    #            '南投縣','嘉義市','臺東縣','嘉義縣','宜蘭縣','金門縣'}
+    if city =='臺北市':
+        region = 'R1'
+    elif city== '新北市':
+        region = 'R2'
+    elif city in city_set:
+        region ='R3'
+    else:
+        region = 'R4'
+    return region
 
-def export_dict_excel(Dict_file, data_loc, data_name):
-    """
-    將Dict內的dataframe轉至excel, 內部檔案為dataframe
-    """
-    file1 = xw.Book()
-    for jj in Dict_file.keys():
-        file1.sheets.add(jj)
-        sheet =  file1.sheets(jj)
-        sheet.range('A1').value = Dict_file[jj]
-        file_name = data_loc + '\\' + data_name  + '.xlsx'
-        file1.save(file_name)
+
+# def export_dict_excel(Dict_file, data_loc, data_name):
+#     """
+#     將Dict內的dataframe轉至excel, 內部檔案為dataframe
+#     """
+#     file1 = xw.Book()
+#     for jj in Dict_file.keys():
+#         file1.sheets.add(jj)
+#         sheet =  file1.sheets(jj)
+#         sheet.range('A1').value = Dict_file[jj]
+#         file_name = data_loc + '\\' + data_name  + '.xlsx'
+#         file1.save(file_name)
  
 # def summarize_p(df,home_p,tfreq,col,quant=0.00):
 #     """

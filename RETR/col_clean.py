@@ -1,4 +1,3 @@
-#%%
 import pandas as pd 
 import datetime as dt
 import re
@@ -6,16 +5,15 @@ import re
 
 """
 Function list:
-1. convert_categorical : 將檔案轉為 category
-2. extract_num :  取出欄位內的所有數字(\d)
-3. classify_string_date: 將日期格式進行分類
-4. convert_date: 將 '交易年月日' 欄位轉為dt.datetime格式
-5. convert_build_date:  將 "建築完成年月" 轉成dt.datetime格式
-6. to_days : 計算屋齡專用 (交易年月日 - 建築完成日期)
-7. classify_build_date:  將 "建築完成年月" 的成可讀取的'字串日期'格式
-8. set_numeric_col: 將部分欄位轉為 numeric
+1. extract_num :  取出欄位內的所有數字(\d)
+2. classify_string_date: 將日期格式進行分類
+3. convert_date: 將 '交易年月日' 欄位轉為dt.datetime格式
+4. convert_build_date:  將 "建築完成年月" 轉成dt.datetime格式
+5. to_days : 計算屋齡專用 (交易年月日 - 建築完成日期)
+6. classify_build_date:  將 "建築完成年月" 的成可讀取的'字串日期'格式
+7. set_numeric_col: 將部分欄位轉為 numeric
 ####　選用部分　＃＃＃＃
-9. set_bool_col : 將部分欄位轉為 boolean格式
+8. set_bool_col : 將部分欄位轉為 boolean格式
 
 """
 
@@ -23,12 +21,12 @@ Function list:
 categorical_col =['鄉鎮市區','交易標的','data','城市']
 
 
-def convert_categorical(df, cols= categorical_col):
-    df1 = df.copy()
-    for jj in cols:
-        df1[jj].fillna('None',inplace=True)
-        df1[jj] = df1[jj].astype('category')
-    return df1
+# def convert_categorical(df, cols= categorical_col):
+#     df1 = df.copy()
+#     for jj in cols:
+#         df1[jj].fillna('None',inplace=True)
+#         df1[jj] = df1[jj].astype('category')
+#     return df1
 
  
 """
