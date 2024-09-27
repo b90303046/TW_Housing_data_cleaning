@@ -66,8 +66,9 @@ def time_range(df, start=(2011,1,1), end=(end_year, end_month, end_day), col='�
 def filter_info(func):
     def inner_fun(*args,**kwarg):
         row0 = args[0].shape[0]  # 期初篩選資料筆數
-        print('篩選欄位{a1}, 篩選條件為{a2}'.format(a1 = kwarg['column'],
-                                           a2 =kwarg['keywords']))
+        keys = list(kwarg.keys())
+        print('篩選欄位{a1}, 篩選條件為{a2}'.format(a1 = kwarg[keys[0]],
+                                           a2 =kwarg[keys[1]]))
         result = func(*args, **kwarg)
         row1 = result.shape[0] # After filter
         state2 = '共刪除{ans}筆'.format(ans=row0-row1)
@@ -81,19 +82,30 @@ def filter_obj(df, column,  keywords, negate=False):
     """
     篩選欄位內特定關鍵詞:
     """
-    df1 = df.copy()
     if isinstance(keywords,str): # 如果輸入字串
         keywords = [keywords]
     key_cols = '|'.join(keywords)
-    if not negate:
-        bool_mask = df1[column].str.contains(key_cols, na=False)
-    else:
-        bool_mask = ~df1[column].str.contains(key_cols, na=False)
-    df1 = df1[bool_mask]
+    if  negate: #排除滿足上述條件的
+        bool_mask = ~df[column].str.contains(key_cols, na=False)
+    else: # 篩選滿足上述條件的
+        bool_mask = df[column].str.contains(key_cols, na=False)
+    df1 = df[bool_mask]
     #print(df1[column].value_counts()) 檢驗篩選結果
     print('過濾"{item}"交易後剩餘{row}筆資料'.format(item=column,
                                             row=df1.shape[0]))
     return(df1)
+
+@filter_info
+def filter_col_num(df, column, numeric=0, negate=False):
+    """
+    If negate is true , then the filter is "<"
+    """
+    if not negate:
+        bool_df = df[column]>numeric
+    else:
+        bool_df = df[column]<= numeric
+    df1 =df[bool_df]
+    return df1
 
 
 
@@ -106,7 +118,8 @@ def compute_area_p(df):
      df1 = df.copy()
      park_bool = (df1['車位總價元'] == 0) | (df1['建物移轉總面積平方公尺'] == 0)
      df1['總價萬'] = np.where(park_bool,df1['總價元'], df1['總價元']-df1['車位總價元'])/10000
-     df1['面積m2'] = np.where(park_bool, df1['建物移轉總面積平方公尺'],  df1['建物移轉總面積平方公尺']-df1['車位移轉總面積平方公尺'])
+     df1['面積m2'] = np.where(park_bool, df1['建物移轉總面積平方公尺'],  
+                            df1['建物移轉總面積平方公尺']-df1['車位移轉總面積平方公尺'])
      price_bool  = (df1['總價萬'] >0 ) & (df1['面積m2']>0)
      df1 = df1[price_bool]
      df1['面積坪'] =df1['面積m2']/ping
