@@ -10,7 +10,7 @@ import os
 read_loc = 'D:\\House_test'
 loc_save = 'D:\\check'
 key_id = 0  #  0:成屋, 1:新成屋
-folder_id = ['Quarterly','sep_data']  #or folder_id = ['sep_data']
+folder_id = ['Quarterly']#'Quarterly','sep_data']  #or folder_id = ['sep_data']
 #####
 
 

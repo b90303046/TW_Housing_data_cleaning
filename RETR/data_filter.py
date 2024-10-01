@@ -15,7 +15,6 @@ Function list
 2. time_range
 3. filter_obj
 4. compute_area_p
-5. filter_special
 """
 end_year, end_month, end_day = (dt.datetime.now().year,
         dt.datetime.now().month, dt.datetime.now().day)
@@ -128,27 +127,6 @@ def compute_area_p(df):
      df1 = df1.drop(['面積m2'], axis=1)
      return df1
 
-
-def filter_special(df, special=['親友','地上權','員工','特殊'], negate=True):
-    """
-    移除特殊交易案件
-    """
-    df1 = df.copy()
-    #remove_tranaction=['親友','員工','地上權','特殊']
-    #remove_tranaction=['地上權','特殊']
-    pat2 = '|'.join(special)
-    df1.fillna({'備註':'NA'}, inplace=True) 
-    if negate:
-        case_bool2 =  ~df1['備註'].str.contains(pat2, na=False)
-    else:
-        case_bool2 =  df1['備註'].str.contains(pat2, na=False)
-     # 補上null value 值
-    df2 = df1[case_bool2]
-    state = '排除親友,員工或地上權之案件,剩餘{}筆'.format(df2.shape[0])
-    print(state)
-    return df2
-
- 
 
 
 def combine_region(x):
@@ -296,94 +274,20 @@ def classify_region(city):
     return region
 
 
-# def export_dict_excel(Dict_file, data_loc, data_name):
-#     """
-#     將Dict內的dataframe轉至excel, 內部檔案為dataframe
-#     """
-#     file1 = xw.Book()
-#     for jj in Dict_file.keys():
-#         file1.sheets.add(jj)
-#         sheet =  file1.sheets(jj)
-#         sheet.range('A1').value = Dict_file[jj]
-#         file_name = data_loc + '\\' + data_name  + '.xlsx'
-#         file1.save(file_name)
- 
-# def summarize_p(df,home_p,tfreq,col,quant=0.00):
-#     """
-#     刪除給定的極端分位數後計算各地區總價(每坪單價)的中位數或平均數
-#     home_p: 每坪單價, 總價元
-#     col   : 排除極端值的欄位選擇
-#     tfreq : 期間分群
-#     quant : 排除樣本極端值比例
-#     記得要先執行 add_timef
-#     """
-#     df1 = df.copy()
-#     gpname1 = '交易-'+tfreq
-#     group_set =[gpname1,'城市'] # 設定集合項目
-#     result = reomve_extreme_case(df1,tfreq,col,quant)
-#     result_mean = result.groupby(group_set, observed=False)[home_p].mean().unstack('城市').round(2)
-#     result_median = result.groupby(group_set, observed=False)[home_p].quantile(0.5).unstack('城市').round(2)
-#     result_mean   = result_mean[city_order]
-#     result_median = result_median[city_order]
-#     total_result_mean = result.groupby(group_set[0], observed=False)[home_p].mean().round(2)
-#     total_result_mean.name ='全國'
-#     total_result_median = result.groupby(group_set[0], observed=False)[home_p].quantile(0.5).round(2)
-#     total_result_median.name='全國'
-#     result_dict={}
-#     result1 = pd.merge(left=total_result_mean, right = result_mean, how='left',
-#                         left_index=True, right_index=True)
-#     result2 = pd.merge(left=total_result_median, right = result_median, how='left',
-#                         left_index=True, right_index=True)
-#     result_dict[home_p+'_mean'] = result1.apply(lambda x:  x/10000)
-#     result_dict[home_p+'_median'] = result2.apply(lambda x:  x/10000)
-#     return result_dict
- 
 
+# Filter the file
+def filter_high_p(df, dict_price):
+        """
+        高價住宅認定標準
+        dict_price = {'R1':7e7,  'R2': 6e7,
+                      'R3':4e7,  'R4': 4e7}
+        """
+        df1 = df.copy()
+        df1['Region'] = df1['城市'].apply(classify_region)
+        high_price_criterion =  (df1['Region']=='R1') & (df1['總價元']>=dict_price['R1'])  | \
+                    ((df1['Region']=='R2') & (df1['總價元']>=dict_price['R2']))  | \
+                    ((df1['Region']=='R3') & (df1['總價元']>=dict_price['R3']))  | \
+                    ((df1['Region']=='R4') & (df1['總價元']>=dict_price['R4']))
+        df2 = df1[high_price_criterion]
+        return df2
 
-
-# def group_quant_p(df, price_type, tfreq, col, quan_value):
-#         """
-#     刪除給定的極端分位數後計算各地區總價(每坪單價)的中位數或平均數
-#     home_p: 每坪單價, 總價元
-#     col   : 排除極端值的欄位選擇
-#     tfreq : 期間分群
-#     quant : 排除樣本極端值比例
-#     記得要先執行 add_timef
-#     """
-#     df1 = df.copy
-#     pass 
- 
- 
- 
-# Export the file to excel
-
-#wb.close()    
-
-# import xlwings as xw
-# # export to excel?
-# try:
-#     wb = xw.Book()
-#     wb.save(excel_file_name)
-# except:
-#     wb = xw.Book(excel_file_name)
-
-
-# for jj in Result_dict.keys():
-#     try:
-#         wb.sheets.add(jj)
-#     except:
-#         pass
-
-#     sheet = wb.sheets[jj]
-#     sheet.range('A1').value = Result_dict[jj]
-
-
-# del_sheet = [jj for jj in wb.sheet_names if re.search('工作', jj)]
-
-# for jj in del_sheet:
-#     try:
-#         wb.sheets[jj].delete()
-#     except:
-#         pass
-
-# wb.save(excel_file_name) 
